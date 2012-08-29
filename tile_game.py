@@ -1,8 +1,9 @@
+#!/usr/bin/env python2.7
 #
 # This is an AI that solves a tile game!
 #
 
-import pygame, time, sys
+import pygame, time, sys, os
 from heapq import *
 from os import listdir, system
 from pygame.locals import *
@@ -33,7 +34,10 @@ class Game():
 	def display(s, b):
 		hori_divider = ' ----' * s.N + ' '
 		vert_divider = '|    ' * s.N + '|'
-		system('cls')
+		if (os.name == 'nt'):
+			system('cls')
+		else:
+			system('clear')
 		for i in range(s.N):
 			print hori_divider
 			print vert_divider
@@ -280,7 +284,11 @@ class Computer_Game(Game):
 	def evaluation(s, b, current):
 		pass
 
-pygame.init()
-N = int(sys.argv[1])
-#Game(N)
-Computer_Game(N)
+
+if __name__ == '__main__':
+	pygame.init()
+	N = int(sys.argv[1])
+	Game(N)
+        #Computer_Game(N)
+
+# vim: noexpandtab shiftwidth=4 tabstop=4 
