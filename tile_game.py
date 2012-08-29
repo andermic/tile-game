@@ -289,6 +289,6 @@ if __name__ == '__main__':
 	pygame.init()
 	N = int(sys.argv[1])
 	Game(N)
-        #Computer_Game(N)
+	#Computer_Game(N)
 
 # vim: noexpandtab shiftwidth=4 tabstop=4 
