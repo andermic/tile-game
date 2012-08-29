@@ -3,20 +3,28 @@
 # This is an AI that solves a tile game!
 #
 
-import pygame, time, sys, os
+import pygame, time, sys, os, signal
 from heapq import *
 from os import listdir, system
 from pygame.locals import *
 from random import choice
 
+def sigintHandler(signum, frame):
+	'''
+	Handles when we get the SIGINT signal from the keyboard.
+	Right now it's a bit of a messy exit, as pygame is in the
+	middle of whatever it's doing.
+	'''
+	print "SIGINT Caught.  Exiting....."
+	exit(0)
 
 class Game():
 	move_count = -1
 
 	def __init__(s, size):
 		s.N = size
-		s.board_initial = [[(1+j+i*s.N)%(s.N*s.N) for j in range(N)] for i in range(N)]
-		s.board = [[(1+j+i*s.N)%(s.N*s.N) for j in range(N)] for i in range(N)]
+		s.board_initial = [[(1+j+i*s.N)%(s.N*s.N) for j in range(s.N)] for i in range(s.N)]
+		s.board = [[(1+j+i*s.N)%(s.N*s.N) for j in range(s.N)] for i in range(s.N)]
 		s.shuffle(10000)
 		
 		if 'record.txt' not in listdir('.'):
@@ -32,6 +40,10 @@ class Game():
 				s.event_handler(event)
 
 	def display(s, b):
+		'''
+		Draws the tiles on the screen.  b is the 
+		array of elements in the grid.
+		'''
 		hori_divider = ' ----' * s.N + ' '
 		vert_divider = '|    ' * s.N + '|'
 		if (os.name == 'nt'):
@@ -140,7 +152,10 @@ class Game():
 	def event_handler(s, event):
 		if event.type == KEYDOWN:
 			if pygame.key.name(event.key) == 'n':
-				Game()
+				Game(s.N)
+			elif event.key == pygame.K_ESCAPE:
+				pygame.quit()
+				exit(0)
 			else:
 				res = s.move(s.board, pygame.key.name(event.key), True, True)
 				if res == None:
@@ -149,6 +164,9 @@ class Game():
 					s.finish()
 				else:
 					s.board = res
+		elif event.type == pygame.QUIT:
+			pygame.quit()
+			exit(0)
 	
 	def manhattan(s, b):
 		sum = 0
@@ -284,11 +302,23 @@ class Computer_Game(Game):
 	def evaluation(s, b, current):
 		pass
 
-
-if __name__ == '__main__':
+def main():
+	signal.signal(signal.SIGINT, sigintHandler)
 	pygame.init()
-	N = int(sys.argv[1])
+
+	# Set the tile dimensions to this
+	# Arbitrary default if there was no
+	# param.
+	if (sys.argv.__len__() < 2):
+		N = 3
+	else:
+		N = int(sys.argv[1])
+		
 	Game(N)
 	#Computer_Game(N)
+	pygame.exit()
 
+if __name__ == '__main__':
+	main()	
+	
 # vim: noexpandtab shiftwidth=4 tabstop=4 
