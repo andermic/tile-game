@@ -1,3 +1,7 @@
+#
+# This is an AI that solves a tile game!
+#
+
 import pygame, time, sys
 from heapq import *
 from os import listdir, system
