@@ -16,16 +16,11 @@ class Game():
 		s.N = size
 		s.board_initial = [[(1+j+i*s.N)%(s.N*s.N) for j in range(N)] for i in range(N)]
 		s.board = [[(1+j+i*s.N)%(s.N*s.N) for j in range(N)] for i in range(N)]
-
+		s.shuffle(10000)
+		
 		if 'record.txt' not in listdir('.'):
 			open('record%d.txt' % s.N,'w').write('999')
 		s.record = int(open('record%d.txt' % s.N,'r').read())
-
-		for i in range(10000):
-			res = s.random_move(s.board[:])
-			if res != None:
-				s.board = res
-		s.display(s.board)
 
 		screen = pygame.display.set_mode((150, 50))
 		pygame.display.set_caption('Tile Game')
@@ -173,6 +168,13 @@ class Game():
 			sum = sum + distance
 		return sum
 
+	def shuffle(s, n):
+		for i in range(n):
+			res = s.random_move(s.board[:])
+			if res != None:
+				s.board = res
+		s.display(s.board)
+
 
 class Computer_Game(Game):
 	already_visited = {}
@@ -182,45 +184,38 @@ class Computer_Game(Game):
 		s.N = size
 		s.board_initial = [[(1+j+i*s.N)%(s.N*s.N) for j in range(s.N)] for i in range(s.N)]
 		s.board = [[(1+j+i*s.N)%(s.N*s.N) for j in range(s.N)] for i in range(s.N)]
-
-		for i in range(10000):
-			move = None
-			while move == None:
-				move = s.random_move(s.board[:])
-			s.board = move
-		s.display(s.board) 
+		s.shuffle(10000)
 		
 		s.start_time = time.clock()
 		s.check_and_update_av([s.board], None)
-		#s.frontier.append((s.manhattan(s.board), 0, s.board))
-		s.frontier.append((s.manhattan_weighted(s.board), 0, s.board))
+		
+		#(HEURISTIC + DEPTH, HEURISTIC, DEPTH, POSITION)
+		s.frontier.append((s.manhattan_weighted(s.board) + 0, s.manhattan_weighted(s.board), 0, s.board))
+		
 		s.node_count = 1
 		while True:
 			# Get the best node in the frontier
-			best = s.frontier[0]
+			best = heappop(s.frontier)
 			
 			# Expand the node
 			if s.node_count % 1000 == 0:
 				print s.node_count,
-				print best[1],
-				#print s.manhattan(best[2])
-				print s.manhattan_weighted(best[2])
-			children = [s.move([row[:] for row in best[2]], dir, False, True) for dir in ['up', 'down', 'left', 'right']]			
+				print best[2],
+				print s.manhattan_weighted(best[3])
+			children = [s.move([row[:] for row in best[3]], dir, False, True) for dir in ['up', 'down', 'left', 'right']]			
 			if "finish" in children:
-				s.finish(best[2])
+				s.finish(best[3])
 			s.node_count = s.node_count + 1
-			current_cost = best[1] + 1
+			current_depth = best[2] + 1
 
 			# Uncomment for A*. Slow but strong solutions.
-			#children = [(current_cost + s.manhattan(c), current_cost, c) for c in s.check_and_update_av(children, best[2])]
-			children = [(current_cost + s.manhattan_weighted(c), current_cost, c) for c in s.check_and_update_av(children, best[2])]
+			children = [(s.manhattan_weighted(c), current_depth, c) for c in s.check_and_update_av(children, best[3])]
+			children = [(c[0]+c[1], c[0], c[1], c[2]) for c in children]
 			
 			# Uncomment for fast but weak solutions.
-			#children = [(s.manhattan(c), current_cost, c) for c in s.check_and_update_av(children, best[2])]
-			#children = [(s.manhattan_weighted(c), current_cost, c) for c in s.check_and_update_av(children, best[2])]
+			#children = [(s.manhattan_weighted(c), s.manhattan_weighted(c), current_depth, c) for c in s.check_and_update_av(children, best[3])]
 			
 			# Update frontier
-			heappop(s.frontier)
 			for c in children:
 				heappush(s.frontier, c)
 
@@ -287,5 +282,5 @@ class Computer_Game(Game):
 
 pygame.init()
 N = int(sys.argv[1])
-Game(N)
-#Computer_Game(N)
+#Game(N)
+Computer_Game(N)
