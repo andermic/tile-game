@@ -205,19 +205,19 @@ class Computer_Game(Game):
 			if s.node_count % 1000 == 0:
 				print s.node_count,
 				print best[2],
-				print s.manhattan_weighted(best[3])
+				print best[1]
 			children = [s.move([row[:] for row in best[3]], dir, False, True) for dir in ['up', 'down', 'left', 'right']]			
 			if "finish" in children:
 				s.finish(best[3])
 			s.node_count = s.node_count + 1
 			current_depth = best[2] + 1
-
-			# Uncomment for A*. Slow but strong solutions.
 			children = [(s.manhattan_weighted(c), current_depth, c) for c in s.check_and_update_av(children, best[3])]
-			children = [(c[0]+c[1], c[0], c[1], c[2]) for c in children]
+			
+			# Uncomment for A*. Slow but strong solutions.
+			#children = [(c[0]+c[1], c[0], c[1], c[2]) for c in children]
 			
 			# Uncomment for fast but weak solutions.
-			#children = [(s.manhattan_weighted(c), s.manhattan_weighted(c), current_depth, c) for c in s.check_and_update_av(children, best[3])]
+			children = [(c[0], c[0], c[1], c[2]) for c in children]
 			
 			# Update frontier
 			for c in children:
