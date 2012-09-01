@@ -116,7 +116,12 @@ class Board():
 
 def _main():
     print "Creating board. . ."
-    b = Board(7)
+    size = 3
+    if sys.argv.__len__() > 1:
+        size = int(sys.argv[1])
+        if size < 3:
+            size = 3
+    b = Board(size)
     b._print()
 
 if __name__ == '__main__':
