@@ -7,6 +7,7 @@
 # don't use tabs if editing this, please.
 
 import time
+import math
 import sys
 import os
 import signal
@@ -24,7 +25,7 @@ class Board():
     that is blank.
     '''
 
-    _shuffleCount = 100
+    _shuffleCount = 1000
 
     def __init__(s, size):
         s.size = size
@@ -75,7 +76,8 @@ class Board():
         s.board[r_prime][c_prime] = temp
         s._pos = (r_prime, c_prime)
 
-
+    def is_solved(s):
+        return s.board == s.board_goal
 
     def _print(s):
         # Get the number of digits for the longest number.
@@ -114,14 +116,25 @@ class Board():
             print row_str
         print bottom_str
 
+def _clear():
+    ''' Clears the screen '''
+    if (os.name == 'nt'):
+        system('cls')
+    else:
+        system('clear')
+
 def _main():
     print "Creating board. . ."
+
     size = 3
     if sys.argv.__len__() > 1:
         size = int(sys.argv[1])
         if size < 3:
             size = 3
+
+
     b = Board(size)
+    _clear()
     b._print()
 
 if __name__ == '__main__':
