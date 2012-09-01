@@ -92,8 +92,14 @@ class Board():
         bottom_str = "└" + ((line_str + "┴") * \
                             (s.size - 1)) + line_str + "┘"
 
+
         print top_str
+        print row_str
         for row in s.board:
+            
+            for x in range(digits / 2):
+                print '│' + (((' ' * (digits + 4)) + '│') * len(row))
+            
             for c in row:
                 c_str = str(c)
                 c_padding = ' ' * (digits - len(c_str))
@@ -101,13 +107,16 @@ class Board():
                     c_str = ' '
                 print '│ ', c_str, c_padding,
             print '│'
+
+            for x in range(digits / 2):
+                print '│' + (((' ' * (digits + 4)) + '│') * len(row))
+
             print row_str
         print bottom_str
 
-
 def _main():
     print "Creating board. . ."
-    b = Board(5)
+    b = Board(7)
     b._print()
 
 if __name__ == '__main__':
