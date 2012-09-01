@@ -19,13 +19,14 @@ from random import choice
 class Board():
     '''
     Represents a shuffleable board.  Upon initialization, the board
-    becomes shuffled based on a constant feild.
+    becomes shuffled based on a constant field.
     Within the board there are several squares.  Each of them
-    initially labeled 1-N^2, and the tile labeled zero is the one
+    initially labeled 1 through N^2, and the tile labeled zero is the one
     that is blank.
-    '''
 
-    _shuffleCount = 1000
+    The board can be printed as well, but this requires UTF-8 in order to
+    function properly.
+    '''
 
     def __init__(s, size):
         s.size = size
@@ -34,10 +35,9 @@ class Board():
                 for x in range(s.size)]\
                 for y in range(s.size)]
 
-        s._pos = (s.size - 1, s.size - 1)
+        s.position = (s.size - 1, s.size - 1)
         s.board_goal = copy.deepcopy(s.board) # Victory state.
-        s._shuffleCount *= s.size**2
-        s.shuffle(s._shuffleCount)
+        s.shuffle(1000 * s.size ** 2)
 
     def shuffle(s, count=1, no_redundant=False):
         for x in range(count):
@@ -52,32 +52,52 @@ class Board():
                 s.move_right()
 
     def move_up(s):
-        if s._pos[0] > 0:
-            s._switch_tiles(s._pos[0], s._pos[1], \
-                            s._pos[0] - 1, s._pos[1])
+        if s.position[0] > 0:
+            s._switch_tiles(s.position[0], s.position[1], \
+                            s.position[0] - 1, s.position[1])
 
     def move_down(s):
-        if s._pos[0] < s.size - 1:
-            s._switch_tiles(s._pos[0], s._pos[1], \
-                            s._pos[0] + 1, s._pos[1])
+        if s.position[0] < s.size - 1:
+            s._switch_tiles(s.position[0], s.position[1], \
+                            s.position[0] + 1, s.position[1])
 
     def move_left(s):
-        if s._pos[1] > 0:
-            s._switch_tiles(s._pos[0], s._pos[1], \
-                            s._pos[0], s._pos[1] - 1)
+        if s.position[1] > 0:
+            s._switch_tiles(s.position[0], s.position[1], \
+                            s.position[0], s.position[1] - 1)
     def move_right(s):
-        if s._pos[1] < s.size - 1:
-            s._switch_tiles(s._pos[0], s._pos[1], \
-                            s._pos[0], s._pos[1] + 1)
+        if s.position[1] < s.size - 1:
+            s._switch_tiles(s.position[0], s.position[1], \
+                            s.position[0], s.position[1] + 1)
 
     def _switch_tiles(s, r, c, r_prime, c_prime):
         temp = s.board[r][c]
         s.board[r][c] = s.board[r_prime][c_prime]
         s.board[r_prime][c_prime] = temp
-        s._pos = (r_prime, c_prime)
+        s.position = (r_prime, c_prime)
 
     def is_solved(s):
         return s.board == s.board_goal
+
+    def manhattan(s):
+        '''
+        Gets the manhattan distance of all tiles (except for the
+        player tile on the board's position) and returns the
+        value.
+        '''
+        total_distance = 0
+        for tile in range(1, s.size**2):
+            location = s.find_tile(tile)
+            destination = ((tile - 1) / s.size, (tile - 1) % s.size)
+            distance = abs(location[0] - destination[0]) + abs(location[1] - destination[1])
+            total_distance += distance
+        return total_distance
+
+    def find_tile(s, n):
+        for row in range(s.size):
+            for column in range(s.size):
+                if s.board[row][column] == n:
+                    return row, column
 
     def _print(s):
         # Get the number of digits for the longest number.
@@ -116,6 +136,23 @@ class Board():
             print row_str
         print bottom_str
 
+class AISolver():
+
+
+    # A heap containing tuples of
+    # the last evaluated heuristic
+    # as well as the state of the board.
+    _frontier = []
+
+    def __init__(s, board):
+        s.board = copy.deepcopy(board)
+        s.moves = 0
+        heappush(s._frontier, (s.moves + s.board.manhattan(), s.board.board))
+
+    def solve(s):
+        print "Nothin here yet!  Ahahahahaha!"
+        print s._frontier
+
 def _clear():
     ''' Clears the screen '''
     if (os.name == 'nt'):
@@ -136,6 +173,8 @@ def _main():
     b = Board(size)
     _clear()
     b._print()
+    cpu = AISolver(b)
+    cpu.solve()
 
 if __name__ == '__main__':
    _main() 
