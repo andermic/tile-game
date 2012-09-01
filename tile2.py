@@ -24,7 +24,7 @@ class Board():
     that is blank.
     '''
 
-    Shuffle_Count = 1000000
+    _shuffleCount = 100
 
     def __init__(s, size):
         s.size = size
@@ -35,10 +35,20 @@ class Board():
 
         s._pos = (s.size - 1, s.size - 1)
         s.board_goal = copy.deepcopy(s.board) # Victory state.
+        s._shuffleCount *= s.size**2
+        s.shuffle(s._shuffleCount)
 
-    def shuffle(s, count=1):
+    def shuffle(s, count=1, no_redundant=False):
         for x in range(count):
-            print x
+            move = choice([0, 1, 2, 3])
+            if move == 0:
+                s.move_up()
+            elif move == 1:
+                s.move_down()
+            elif move == 2:
+                s.move_left()
+            else: # 3  
+                s.move_right()
 
     def move_up(s):
         if s._pos[0] > 0:
@@ -46,7 +56,7 @@ class Board():
                             s._pos[0] - 1, s._pos[1])
 
     def move_down(s):
-        if s._pos[0] < s.size:
+        if s._pos[0] < s.size - 1:
             s._switch_tiles(s._pos[0], s._pos[1], \
                             s._pos[0] + 1, s._pos[1])
 
@@ -55,7 +65,7 @@ class Board():
             s._switch_tiles(s._pos[0], s._pos[1], \
                             s._pos[0], s._pos[1] - 1)
     def move_right(s):
-        if s._pos[1] < s.size:
+        if s._pos[1] < s.size - 1:
             s._switch_tiles(s._pos[0], s._pos[1], \
                             s._pos[0], s._pos[1] + 1)
 
@@ -65,19 +75,39 @@ class Board():
         s.board[r_prime][c_prime] = temp
         s._pos = (r_prime, c_prime)
 
+
+
     def _print(s):
-        for x in s.board:
-            print x
+        # Get the number of digits for the longest number.
+        max_num = s.size**2 - 1
+        digits = len(str(max_num))
+
+        # The line_str string gets the max digit length
+        # and puts a padding of two on either end.
+        line_str = "─" * (digits + 4)
+        top_str = "┌" + ((line_str + "┬") * \
+                        (s.size - 1)) + line_str + "┐"
+        row_str = "├" + ((line_str + "┼") * \
+                        (s.size - 1)) + line_str + "┤"
+        bottom_str = "└" + ((line_str + "┴") * \
+                            (s.size - 1)) + line_str + "┘"
+
+        print top_str
+        for row in s.board:
+            for c in row:
+                c_str = str(c)
+                c_padding = ' ' * (digits - len(c_str))
+                if c_str == '0':
+                    c_str = ' '
+                print '│ ', c_str, c_padding,
+            print '│'
+            print row_str
+        print bottom_str
+
 
 def _main():
+    print "Creating board. . ."
     b = Board(5)
-    b.move_up()
-    b._print()
-    b.move_left()
-    b._print()
-    b.move_down()
-    b._print()
-    b.move_right()
     b._print()
 
 if __name__ == '__main__':
