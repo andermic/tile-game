@@ -97,7 +97,7 @@ class Board():
         for row in range(s.size):
             for column in range(s.size):
                 if s.board[row][column] == n:
-                    return row, column
+                    return (row, column)
 
     def _print(s):
         # Get the number of digits for the longest number.
@@ -139,20 +139,106 @@ class Board():
 class AISolver():
 
 
-    # A heap containing tuples of
-    # the last evaluated heuristic
-    # as well as the state of the board.
+    '''
+    A heap containing tuples of
+    the last evaluated heuristic
+    as well as the state of the board.
+    '''
     _frontier = []
+
+    '''
+    Determines the moves we've taken to get to
+    a solution.
+    '''
+    _move_list = []
+
+    '''
+    Determines the move we took.
+    '''
+    RIGHT = 'R'
+    LEFT = 'L'
+    UP = 'U'
+    DOWN = 'D'
+
+    '''
+    Determines the last move made.
+    '''
+    _last_move = ''
 
     def __init__(s, board):
         s.board = copy.deepcopy(board)
-        s.moves = 0
-        heappush(s._frontier, (s.moves + s.board.manhattan(), s.board.board))
+        s.depth = 0
+        s.total_moves = 0
+        s._queue_position('')
 
     def solve(s):
-        print "Nothin here yet!  Ahahahahaha!"
-        print s._frontier
+        while True:
+            tuple_ = heappop(s._frontier)
 
+            #  Restore this node's state.
+            s.board.board = tuple_[2]
+            s.depth = tuple_[1]
+            s._last_move = tuple_[3]
+
+            '''
+            If the heuristic minus the number
+            of moves deep in the tree is zero,
+            then we've found a solution!
+            (Only should work with A*)
+            '''
+            if s.board.is_solved():
+                print "Yay!"
+                s.board._print()
+                exit(0)
+
+            s._queue_moves()
+            
+            #if s.total_moves % 1000 == 0:
+            s.board._print()
+            print s.total_moves, s.depth, s.board.manhattan(), s._last_move
+
+
+    def _queue_moves(s):
+        '''
+        Prioritizes the next few moves.
+        '''
+        b = s.board
+        s.depth += 1
+        s.total_moves += 1
+
+        # TODO: This is a little silly.  There's
+        # probably a better way to do this.
+        if (b.position[0] < b.size - 1 and s._last_move != s.LEFT) :
+            b.move_right()
+            s._queue_position(s.RIGHT)
+            b.move_left()
+
+        if (b.position[0] > 0 and s._last_move != s.RIGHT):
+            b.move_left()
+            s._queue_position(s.LEFT)
+            b.move_right()
+        
+        if (b.position[1] > 0 and s._last_move != s.DOWN):
+            b.move_up()
+            s._queue_position(s.UP)
+            b.move_down()
+        
+        if (b.position[1] < b.size - 1 and s._last_move != s.UP):
+            b.move_down()
+            s._queue_position(s.DOWN)
+            b.move_up() # Only doing this so we can print the board.
+
+        # TODO: Get rid of duplicate positions in the
+        # heap.  Also make sure to queue up on the moves
+        # we've made when going back through the loop!
+
+    def _queue_position(s, move):
+        '''
+        Puts the current position, having been evaulated by
+        the heuristic, onto the frontier.
+        '''
+        heappush(s._frontier, (s.depth + s.board.manhattan(), s.depth, copy.deepcopy(s.board.board), move))
+        
 def _clear():
     ''' Clears the screen '''
     if (os.name == 'nt'):
