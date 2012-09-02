@@ -170,19 +170,6 @@ class Board():
 class AISolver():
 
     '''
-    A heap containing tuples of
-    the last evaluated heuristic
-    as well as the state of the board.
-    '''
-    _frontier = []
-
-    '''
-    Determines the moves we've taken to get to
-    a solution.
-    '''
-    _move_list = []
-
-    '''
     Determines the move we took.
     '''
     RIGHT = 'R'
@@ -190,18 +177,30 @@ class AISolver():
     UP = 'U'
     DOWN = 'D'
 
-    '''
-    Determines the last move made.
-    '''
-    _last_move = ''
-
     def __init__(s, board):
+        '''
+        Determines the last move made.
+        '''
+        s._last_move = ''     
+        
+        '''
+        A heap containing tuples of
+        the last evaluated heuristic
+        as well as the state of the board.
+        '''
+        s._frontier = []
+
+        '''
+        Determines the moves we've taken to get to
+        a solution.
+        '''
+        s._move_list = []
         s.board = copy.deepcopy(board)
+        s.board_initial = copy.deepcopy(board)
         s.depth = 0
         s.total_expanded_nodes = 0
         s._expand_moves()
         print "INITIAL"
-        print s.board.manhattan(), s.depth
         s.board._print()
 
 
@@ -213,6 +212,8 @@ class AISolver():
             s.depth = tuple_[1]
             s._last_move = tuple_[2]
             s.board.set_tiles(tuple_[3])
+            s._move_list = (tuple_[4])
+            s._move_list.append(s._last_move)
 
             '''
             If the heuristic minus the number
@@ -221,9 +222,9 @@ class AISolver():
             (Only should work with A*)
             '''
             if tuple_[0] - s.depth == 0:
-                print "Yay!"
-                s.board._print()
-                print s._move_list
+                print "Yay!", s.depth, s._move_list
+                s.depth = 0
+                s._play()
                 exit(0)
 
             s._expand_moves()
@@ -241,16 +242,16 @@ class AISolver():
         Only store a position if it's not going to undo something
         we've already done, or if we're on the edge of the board.
         '''
-        if ((not b.on_right_edge()) and s._last_move != s.LEFT):
+        if (not b.on_right_edge() and s._last_move != s.LEFT):
             s._move_and_queue(s.RIGHT)
                 
-        if ((not b.on_top_edge()) and s._last_move != s.DOWN):
+        if (not b.on_top_edge() and s._last_move != s.DOWN):
             s._move_and_queue(s.UP)
             
-        if ((not b.on_left_edge()) and s._last_move != s.RIGHT):
+        if (not b.on_left_edge() and s._last_move != s.RIGHT):
             s._move_and_queue(s.LEFT)
 
-        if ((not b.on_bottom_edge()) and s._last_move != s.UP):
+        if (not b.on_bottom_edge() and s._last_move != s.UP):
             s._move_and_queue(s.DOWN)
 
     def _move_and_queue(s, dir):
@@ -265,6 +266,38 @@ class AISolver():
         prev_state = s.board.board
         s.board.set_tiles(new_state)
 
+        # Don't queue anything that isn't a valid move.
+        if (not s._move(dir)):
+            return
+
+        heuristic = s.depth + s.board.manhattan()
+        if s.total_expanded_nodes % 1000 == 0:
+            print "NODES:", s.total_expanded_nodes, "DEPTH:", s.depth, "MANHA:", s.board.manhattan(), "MOVE:", dir
+        heappush(s._frontier, (heuristic, s.depth, dir, new_state, s._move_list[:]))
+        s.board.set_tiles(prev_state)
+    
+    def _play(s):
+        s.board = s.board_initial
+        while True:
+            _clear()
+            s.board._print()
+            print s.depth
+
+            if s._move_list.__len__() < 1:
+                break
+            
+            move = s._move_list.pop(0)
+            raw_input("Press [Enter] To Continue")
+
+            if not s._move(move):
+                print "Unrecognized move!"
+                break
+
+            s.depth += 1
+
+        print "Done!"
+
+    def _move(s, dir):
         if dir == s.UP:
             s.board.move_up()
         elif dir == s.DOWN:
@@ -274,13 +307,8 @@ class AISolver():
         elif dir == s.RIGHT: # Right
             s.board.move_right()
         else:
-            return
-
-        heuristic = s.depth + s.board.manhattan()
-        if s.total_expanded_nodes % 1000 == 0:
-            print "NODES:", s.total_expanded_nodes, "DEPTH:", s.depth, "MANHA:", s.board.manhattan(), "MOVE:", dir
-        heappush(s._frontier, (heuristic, s.depth, dir, new_state))
-        s.board.set_tiles(prev_state)
+            return False
+        return True
 
 def _clear():
     ''' Clears the screen '''
