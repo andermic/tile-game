@@ -114,7 +114,6 @@ class Board():
         bottom_str = "└" + ((line_str + "┴") * \
                             (s.size - 1)) + line_str + "┘"
 
-
         print top_str
         print row_str
         for row in s.board:
@@ -169,16 +168,27 @@ class AISolver():
         s.board = copy.deepcopy(board)
         s.depth = 0
         s.total_moves = 0
-        s._queue_position('')
+        s._queue_position(s.UP)
 
     def solve(s):
         while True:
             tuple_ = heappop(s._frontier)
 
             #  Restore this node's state.
-            s.board.board = tuple_[2]
+            s._restore_board(tuple_[1])
             s.depth = tuple_[1]
-            s._last_move = tuple_[3]
+
+            if s.depth > 0:
+                s._move_list.append(tuple_[2])
+                s._move(tuple_[2])
+
+            if s.total_moves > -1:
+                s.board._print()
+                print "Loops:", s.total_moves, \
+                        "Depth:", s.depth, \
+                        "Man:", s.board.manhattan(), \
+                        "Heur:", tuple_[0], \
+                        "Moves:", s._move_list 
 
             '''
             If the heuristic minus the number
@@ -186,19 +196,21 @@ class AISolver():
             then we've found a solution!
             (Only should work with A*)
             '''
-            if s.board.is_solved():
+            if tuple_[0] - s.depth == 0:
                 print "Yay!"
                 s.board._print()
+                print s._move_list
                 exit(0)
 
-            s._queue_moves()
-            
-            #if s.total_moves % 1000 == 0:
-            s.board._print()
-            print s.total_moves, s.depth, s.board.manhattan(), s._last_move
+            '''
+            Sleep for debugging (heuristic evaluation still
+            seems to really suck).
+            '''
+            #time.sleep(5)
+            s._expand_moves()
 
 
-    def _queue_moves(s):
+    def _expand_moves(s):
         '''
         Prioritizes the next few moves.
         '''
@@ -206,27 +218,32 @@ class AISolver():
         s.depth += 1
         s.total_moves += 1
 
+        if s._move_list.__len__() > 0:
+            last_move = s._move_list[-1]
+        else:
+            last_move = ''
+
         # TODO: This is a little silly.  There's
         # probably a better way to do this.
-        if (b.position[0] < b.size - 1 and s._last_move != s.LEFT) :
-            b.move_right()
+        if (b.position[1] < b.size - 1 and last_move != s.LEFT):
+            s.board.move_right()
             s._queue_position(s.RIGHT)
-            b.move_left()
-
-        if (b.position[0] > 0 and s._last_move != s.RIGHT):
-            b.move_left()
-            s._queue_position(s.LEFT)
-            b.move_right()
-        
-        if (b.position[1] > 0 and s._last_move != s.DOWN):
-            b.move_up()
+            s.board.move_left()
+                
+        if (b.position[0] > 0 and last_move != s.DOWN):
+            s.board.move_up()
             s._queue_position(s.UP)
-            b.move_down()
-        
-        if (b.position[1] < b.size - 1 and s._last_move != s.UP):
-            b.move_down()
+            s.board.move_down()
+            
+        if (b.position[1] > 0 and last_move != s.RIGHT):
+            s.board.move_left()
+            s._queue_position(s.LEFT)
+            s.board.move_right()
+
+        if (b.position[0] < b.size - 1 and last_move != s.UP):
+            s.board.move_down()
             s._queue_position(s.DOWN)
-            b.move_up() # Only doing this so we can print the board.
+            #s.board.move_up() # Only doing this so we can print the board.
 
         # TODO: Get rid of duplicate positions in the
         # heap.  Also make sure to queue up on the moves
@@ -237,7 +254,37 @@ class AISolver():
         Puts the current position, having been evaulated by
         the heuristic, onto the frontier.
         '''
-        heappush(s._frontier, (s.depth + s.board.manhattan(), s.depth, copy.deepcopy(s.board.board), move))
+        heuristic = s.depth + s.board.manhattan()
+        print s._move_list
+        print move, s.depth, heuristic
+        heappush(s._frontier, (heuristic, s.depth, move))
+
+    def _restore_board(s, moves):
+        if moves < s.depth:
+            print "REVERSING:", s._move_list
+            print "TO:", moves, "moves"
+            for x in range(s._move_list.__len__() - moves):
+                s._reverse_move(s._move_list.pop())
+
+    def _move(s, dir):
+        if dir == s.UP:
+            s.board.move_up()
+        elif dir == s.DOWN:
+            s.board.move_down()
+        elif dir == s.LEFT:
+            s.board.move_left()
+        else: # Right
+            s.board.move_right()
+
+    def _reverse_move(s, dir):
+        if dir == s.UP:
+            s.board.move_down()
+        elif dir == s.DOWN:
+            s.board.move_up()
+        elif dir == s.LEFT:
+            s.board.move_right()
+        else: # RIGHT
+            s.board.move_left()
         
 def _clear():
     ''' Clears the screen '''
@@ -258,7 +305,6 @@ def _main():
 
     b = Board(size)
     _clear()
-    b._print()
     cpu = AISolver(b)
     cpu.solve()
 
