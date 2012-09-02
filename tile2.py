@@ -39,6 +39,10 @@ class Board():
         s.board_goal = copy.deepcopy(s.board) # Victory state.
         s.shuffle(1000 * s.size ** 2)
 
+    def set_tiles(s, tiles):
+        s.board = tiles
+        s.position = s.find_tile(0)
+
     def shuffle(s, count=1, no_redundant=False):
         for x in range(count):
             move = choice([0, 1, 2, 3])
@@ -51,22 +55,50 @@ class Board():
             else: # 3  
                 s.move_right()
 
+    def on_right_edge(s):
+        '''
+        Determines if we're on the right
+        edge of the board.
+        '''
+        return s.position[1] ==  s.size - 1
+    
+    def on_left_edge(s):
+        '''
+        Determines if we're on the left edge
+        of the board.
+        '''
+        return s.position[1] == 0
+    
+    def on_top_edge(s):
+        '''
+        Determines if we're on the top edge
+        of the board.
+        '''
+        return s.position[0] == 0
+
+    def on_bottom_edge(s):
+        '''
+        Determines if we're on the bottom
+        edge of the board.
+        '''
+        return s.position[0] == s.size - 1
+
     def move_up(s):
-        if s.position[0] > 0:
+        if not s.on_top_edge():
             s._switch_tiles(s.position[0], s.position[1], \
                             s.position[0] - 1, s.position[1])
 
     def move_down(s):
-        if s.position[0] < s.size - 1:
+        if not s.on_bottom_edge():
             s._switch_tiles(s.position[0], s.position[1], \
                             s.position[0] + 1, s.position[1])
 
     def move_left(s):
-        if s.position[1] > 0:
+        if not s.on_left_edge():
             s._switch_tiles(s.position[0], s.position[1], \
                             s.position[0], s.position[1] - 1)
     def move_right(s):
-        if s.position[1] < s.size - 1:
+        if not s.on_right_edge():
             s._switch_tiles(s.position[0], s.position[1], \
                             s.position[0], s.position[1] + 1)
 
@@ -137,7 +169,6 @@ class Board():
 
 class AISolver():
 
-
     '''
     A heap containing tuples of
     the last evaluated heuristic
@@ -167,28 +198,21 @@ class AISolver():
     def __init__(s, board):
         s.board = copy.deepcopy(board)
         s.depth = 0
-        s.total_moves = 0
-        s._queue_position(s.UP)
+        s.total_expanded_nodes = 0
+        s._expand_moves()
+        print "INITIAL"
+        print s.board.manhattan(), s.depth
+        s.board._print()
+
 
     def solve(s):
         while True:
             tuple_ = heappop(s._frontier)
 
             #  Restore this node's state.
-            s._restore_board(tuple_[1])
             s.depth = tuple_[1]
-
-            if s.depth > 0:
-                s._move_list.append(tuple_[2])
-                s._move(tuple_[2])
-
-            if s.total_moves > -1:
-                s.board._print()
-                print "Loops:", s.total_moves, \
-                        "Depth:", s.depth, \
-                        "Man:", s.board.manhattan(), \
-                        "Heur:", tuple_[0], \
-                        "Moves:", s._move_list 
+            s._last_move = tuple_[2]
+            s.board.set_tiles(tuple_[3])
 
             '''
             If the heuristic minus the number
@@ -202,11 +226,6 @@ class AISolver():
                 print s._move_list
                 exit(0)
 
-            '''
-            Sleep for debugging (heuristic evaluation still
-            seems to really suck).
-            '''
-            #time.sleep(5)
             s._expand_moves()
 
 
@@ -216,76 +235,53 @@ class AISolver():
         '''
         b = s.board
         s.depth += 1
-        s.total_moves += 1
+        s.total_expanded_nodes += 1
 
-        if s._move_list.__len__() > 0:
-            last_move = s._move_list[-1]
-        else:
-            last_move = ''
-
-        # TODO: This is a little silly.  There's
-        # probably a better way to do this.
-        if (b.position[1] < b.size - 1 and last_move != s.LEFT):
-            s.board.move_right()
-            s._queue_position(s.RIGHT)
-            s.board.move_left()
+        '''
+        Only store a position if it's not going to undo something
+        we've already done, or if we're on the edge of the board.
+        '''
+        if ((not b.on_right_edge()) and s._last_move != s.LEFT):
+            s._move_and_queue(s.RIGHT)
                 
-        if (b.position[0] > 0 and last_move != s.DOWN):
-            s.board.move_up()
-            s._queue_position(s.UP)
-            s.board.move_down()
+        if ((not b.on_top_edge()) and s._last_move != s.DOWN):
+            s._move_and_queue(s.UP)
             
-        if (b.position[1] > 0 and last_move != s.RIGHT):
-            s.board.move_left()
-            s._queue_position(s.LEFT)
-            s.board.move_right()
+        if ((not b.on_left_edge()) and s._last_move != s.RIGHT):
+            s._move_and_queue(s.LEFT)
 
-        if (b.position[0] < b.size - 1 and last_move != s.UP):
+        if ((not b.on_bottom_edge()) and s._last_move != s.UP):
+            s._move_and_queue(s.DOWN)
+
+    def _move_and_queue(s, dir):
+        '''
+        Moves to board to a new state.
+        This is done by copying the state of the
+        board and then moving that board to the state
+        in question.  This state is then evaluated
+        and placed on the frontier.
+        '''
+        new_state = [row[:] for row in s.board.board]
+        prev_state = s.board.board
+        s.board.set_tiles(new_state)
+
+        if dir == s.UP:
+            s.board.move_up()
+        elif dir == s.DOWN:
             s.board.move_down()
-            s._queue_position(s.DOWN)
-            #s.board.move_up() # Only doing this so we can print the board.
+        elif dir == s.LEFT:
+            s.board.move_left()
+        elif dir == s.RIGHT: # Right
+            s.board.move_right()
+        else:
+            return
 
-        # TODO: Get rid of duplicate positions in the
-        # heap.  Also make sure to queue up on the moves
-        # we've made when going back through the loop!
-
-    def _queue_position(s, move):
-        '''
-        Puts the current position, having been evaulated by
-        the heuristic, onto the frontier.
-        '''
         heuristic = s.depth + s.board.manhattan()
-        print s._move_list
-        print move, s.depth, heuristic
-        heappush(s._frontier, (heuristic, s.depth, move))
+        if s.total_expanded_nodes % 1000 == 0:
+            print "NODES:", s.total_expanded_nodes, "DEPTH:", s.depth, "MANHA:", s.board.manhattan(), "MOVE:", dir
+        heappush(s._frontier, (heuristic, s.depth, dir, new_state))
+        s.board.set_tiles(prev_state)
 
-    def _restore_board(s, moves):
-        if moves < s.depth:
-            print "REVERSING:", s._move_list
-            print "TO:", moves, "moves"
-            for x in range(s._move_list.__len__() - moves):
-                s._reverse_move(s._move_list.pop())
-
-    def _move(s, dir):
-        if dir == s.UP:
-            s.board.move_up()
-        elif dir == s.DOWN:
-            s.board.move_down()
-        elif dir == s.LEFT:
-            s.board.move_left()
-        else: # Right
-            s.board.move_right()
-
-    def _reverse_move(s, dir):
-        if dir == s.UP:
-            s.board.move_down()
-        elif dir == s.DOWN:
-            s.board.move_up()
-        elif dir == s.LEFT:
-            s.board.move_right()
-        else: # RIGHT
-            s.board.move_left()
-        
 def _clear():
     ''' Clears the screen '''
     if (os.name == 'nt'):
