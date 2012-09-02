@@ -245,7 +245,7 @@ class Computer_Game(Game):
 			children = [(heuristic(c), current_depth, c) for c in s.check_and_update_av(children, best[3])]
 			
 			# Uncomment for A*. Slow but strong solutions.
-                        children = [(c[0]+c[1], c[0], c[1], c[2]) for c in children]
+                        #children = [(c[0]+c[1], c[0], c[1], c[2]) for c in children]
 			
 			# Uncomment for fast but weak solutions.
                         #children = [(c[0], c[0], c[1], c[2]) for c in children]
