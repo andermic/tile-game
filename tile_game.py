@@ -27,7 +27,7 @@ class Game():
 		s.board = [[(1+j+i*s.N)%(s.N*s.N) for j in range(s.N)] for i in range(s.N)]
 		s.shuffle(10000)
 		
-		if 'record.txt' not in listdir('.'):
+                if 'record%d.txt' % s.N not in listdir('.'):
 			open('record%d.txt' % s.N,'w').write('999')
 		s.record = int(open('record%d.txt' % s.N,'r').read())
 
@@ -245,10 +245,10 @@ class Computer_Game(Game):
 			children = [(heuristic(c), current_depth, c) for c in s.check_and_update_av(children, best[3])]
 			
 			# Uncomment for A*. Slow but strong solutions.
-			#children = [(c[0] + c[1], c[0], c[1], c[2]) for c in children]
+                        #children = [(c[0]+c[1], c[0], c[1], c[2]) for c in children]
 			
 			# Uncomment for fast but weak solutions.
-			children = [(c[0], c[0], c[1], c[2]) for c in children]
+                        #children = [(c[0], c[0], c[1], c[2]) for c in children]
 			
 			# Update frontier
 			for c in children:
@@ -327,8 +327,8 @@ def main():
 	else:
 		N = int(sys.argv[1])
 		
-	Game(N)
-	#Computer_Game(N)
+        #Game(N)
+        Computer_Game(N)
 	pygame.exit()
 
 if __name__ == '__main__':
