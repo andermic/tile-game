@@ -190,6 +190,16 @@ class Game():
 			sum = sum + distance
 		return sum
 
+	def misplaced_tile_count(s, b):
+		sum = 0
+		for tile in range(1, s.N**2):
+			actual = list(s.find_tile(b, tile))
+			correct = [(tile - 1) / s.N, (tile - 1) % s.N]
+			if actual == correct:
+				sum += 1
+		return sum
+
+
 	def shuffle(s, n):
 		for i in range(n):
 			res = s.random_move(s.board[:])
@@ -210,10 +220,13 @@ class Computer_Game(Game):
 		
 		s.start_time = time.clock()
 		s.check_and_update_av([s.board], None)
+
+		# Insert heuristic here (it'll be called a few times)!
+		heuristic = lambda b: \
+				s.manhattan_weighted(b)
 		
 		#(HEURISTIC + DEPTH, HEURISTIC, DEPTH, POSITION)
-		s.frontier.append((s.manhattan_weighted(s.board) + 0, s.manhattan_weighted(s.board), 0, s.board))
-		
+		s.frontier.append((heuristic(s.board) + 0, heuristic(s.board), 0, s.board))
 		s.node_count = 1
 		while True:
 			# Get the best node in the frontier
@@ -229,7 +242,7 @@ class Computer_Game(Game):
 				s.finish(best[3])
 			s.node_count = s.node_count + 1
 			current_depth = best[2] + 1
-			children = [(s.manhattan_weighted(c), current_depth, c) for c in s.check_and_update_av(children, best[3])]
+			children = [(heuristic(c), current_depth, c) for c in s.check_and_update_av(children, best[3])]
 			
 			# Uncomment for A*. Slow but strong solutions.
                         children = [(c[0]+c[1], c[0], c[1], c[2]) for c in children]
