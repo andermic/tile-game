@@ -417,12 +417,40 @@ class AISolver2(_AISolverBase):
     def solve(s):
         while True:
             tuple_ = heappop(s._frontier)
-            last_node = s._node
+            s._move_position(tuple_[1])
             s._node = tuple_[1]
+            s.total_expanded_nodes += 1
 
-            print s._node.depth
+            if tuple_[0] - tuple_[1].depth == 0:
+                print "Yay!"
+                exit(0)             
+
+            s._expand_moves()
 
 
+    def _move_position(s, next_node):
+        # This will get us to the new node.
+        move_stack = []
+
+        parent = s._node.get_common_parent(next_node)
+
+        print "PARENT DEPTH:", parent.depth
+        print "NODE DEPTH:", s._node.depth
+        print "LAST DEPTH", next_node.depth
+
+        while s._node != parent:
+            move = s._get_dir_to_node(s._node)
+            s._reverse_move(move)
+            s._node = s._node.parent
+
+        for node_ref in move_stack:
+            move = s._get_dir_to_node(node_ref)
+            s._move(move)
+
+        move = s._get_dir_to_node(next_node)
+        s._move(move)
+        
+        s.board._print()
 
     def _get_dir_to_node(s, node):
         '''
@@ -447,8 +475,6 @@ class AISolver2(_AISolverBase):
     def _expand_moves(s):
         last_dir = s._get_dir_to_node(s._node)
 
-        print "LAST_DIR:", last_dir
-
         # These all need to be separate references!  No local variables!
         if last_dir != s.LEFT and not s.board.on_right_edge():
             s._node.right = s._move_and_queue(s.RIGHT)
@@ -466,7 +492,6 @@ class AISolver2(_AISolverBase):
         s._move(dir)
         manhattan = s.board.manhattan()
         print s._node.depth + 1, "_____", dir, "_____", manhattan
-        s.board._print()
         s._reverse_move(dir)
         node_ref = MoveTreeNode(s._node, s._node.depth + 1)
 
