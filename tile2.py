@@ -189,11 +189,10 @@ class _AISolverBase:
             
             s.board = copy.deepcopy(board)
             s.board_initial = copy.deepcopy(board)
-            s.depth = 0
             s.total_expanded_nodes = 0
-            s._expand_moves()
             print "INITIAL"
-            s.board._print()
+            s.board_initial._print()
+            s._expand_moves()
 
     def solve(s):
         '''
@@ -224,15 +223,33 @@ class _AISolverBase:
             return False
         return True
 
+    def _reverse_move(s, dir):
+        '''
+        Moves in the opposite of the specified direction.
+        '''
+        if dir == s.UP:
+            s.board.move_down()
+        elif dir == s.DOWN:
+            s.board.move_up()
+        elif dir == s.LEFT:
+            s.board.move_right()
+        elif dir == s.RIGHT: # Right
+            s.board.move_left()
+        else:
+            return False
+        return True
+
     def _play(s):
         '''
         Plays through the moves that got to the solution.
         '''
         pass
 
-class MoveTree:
+class MoveTreeNode:
     '''
-    A tree of game moves.
+    A tree of game moves. TODO: Maybe this should keep
+    the directions, or some sort of indications of the
+    direction taken before said node.
     '''
 
     def __init__(s, parent=None, depth=0):
@@ -292,6 +309,7 @@ class AISolver1(_AISolverBase):
         '''
         s._last_move = ''     
         s._move_list = []
+        s.depth = 0
         _AISolverBase.__init__(s, board)
 
     def solve(s):
@@ -390,14 +408,70 @@ class AISolver1(_AISolverBase):
 class AISolver2(_AISolverBase):
 
     def __init__(s, board):
-
         # Make move tree first so call to _expand_moves
         # functions the way it should.
-        s._move_tree = MoveTree()
+        s._move_tree = MoveTreeNode()
+        s._node = s._move_tree
         _AISolverBase.__init__(s, board)
 
     def solve(s):
-        pass
+        while True:
+            tuple_ = heappop(s._frontier)
+            last_node = s._node
+            s._node = tuple_[1]
+
+            print s._node.depth
+
+
+
+    def _get_dir_to_node(s, node):
+        '''
+        Used to get the direction to the node
+        we're in.
+        '''
+        if node.parent == None:
+            return ''
+        node_ref = node
+        node = node.parent
+        if node_ref == node.left:
+            return s.LEFT
+        elif node_ref == node.right:
+            return s.RIGHT
+        elif node_ref == node.up:
+            return s.UP
+        elif node_ref == node.down:
+            return s.DOWN
+        else:
+            return ''
+
+    def _expand_moves(s):
+        last_dir = s._get_dir_to_node(s._node)
+
+        print "LAST_DIR:", last_dir
+
+        # These all need to be separate references!  No local variables!
+        if last_dir != s.LEFT and not s.board.on_right_edge():
+            s._node.right = s._move_and_queue(s.RIGHT)
+        
+        if last_dir != s.RIGHT and not s.board.on_left_edge():
+            s._node.left = s._move_and_queue(s.LEFT) 
+
+        if last_dir != s.DOWN and not s.board.on_top_edge():
+            s._node.up = s._move_and_queue(s.UP) 
+
+        if last_dir != s.UP and not s.board.on_bottom_edge():
+            s._node.down = s._move_and_queue(s.DOWN)
+
+    def _move_and_queue(s, dir):
+        s._move(dir)
+        manhattan = s.board.manhattan()
+        print s._node.depth + 1, "_____", dir, "_____", manhattan
+        s.board._print()
+        s._reverse_move(dir)
+        node_ref = MoveTreeNode(s._node, s._node.depth + 1)
+
+        heappush(s._frontier, (node_ref.depth + manhattan, node_ref))
+        return node_ref
 
 def _clear():
     ''' Clears the screen '''
@@ -418,7 +492,7 @@ def _main():
 
     b = Board(size)
     _clear()
-    cpu = AISolver1(b)
+    cpu = AISolver2(b)
     cpu.solve()
 
 if __name__ == '__main__':
