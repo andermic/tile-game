@@ -37,9 +37,7 @@ class Board():
 
         s.position = (s.size - 1, s.size - 1)
         s.board_goal = copy.deepcopy(s.board) # Victory state.
-        #s.shuffle(1000 * s.size ** 2)
-        s.move_left()
-        s.move_up()
+        s.shuffle(1000 * s.size ** 2)
 
     def set_tiles(s, tiles):
         s.board = tiles
