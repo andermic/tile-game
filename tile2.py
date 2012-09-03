@@ -178,11 +178,7 @@ class _AISolverBase:
     DOWN = 'D'
 
     def __init__(s, board):
-            '''
-            Determines the last move made.
-            '''
-            s._last_move = ''     
-            
+                        
             '''
             A heap containing tuples of
             the last evaluated heuristic
@@ -190,11 +186,7 @@ class _AISolverBase:
             '''
             s._frontier = []
 
-            '''
-            Determines the moves we've taken to get to
-            a solution.
-            '''
-            s._move_list = []
+            
             s.board = copy.deepcopy(board)
             s.board_initial = copy.deepcopy(board)
             s.depth = 0
@@ -289,6 +281,18 @@ class MoveTree:
         return node
 
 class AISolver1(_AISolverBase):
+
+    def __init__(s, board):
+        '''
+        Determines the moves we've taken to get to
+        a solution.
+        '''
+        '''
+        Determines the last move made.
+        '''
+        s._last_move = ''     
+        s._move_list = []
+        _AISolverBase.__init__(s, board)
 
     def solve(s):
         while True:
@@ -385,12 +389,12 @@ class AISolver1(_AISolverBase):
 
 class AISolver2(_AISolverBase):
 
-    def __init__(s):
+    def __init__(s, board):
 
         # Make move tree first so call to _expand_moves
         # functions the way it should.
         s._move_tree = MoveTree()
-        _AISolverBase.__init__(s)
+        _AISolverBase.__init__(s, board)
 
     def solve(s):
         pass
