@@ -12,8 +12,9 @@ import sys
 import os
 import signal
 import copy
+import optparse
 from heapq import *
-from os import listdir, system
+from os import system
 from random import choice
 
 class Board():
@@ -322,7 +323,10 @@ class AISolver1(_AISolverBase):
                 s.depth = 0
                 s._play()
                 exit(0)
-
+            if s.total_expanded_nodes % 1000 == 0:
+                print "NODES:", s.total_expanded_nodes, "DEPTH:", \
+                                s.depth, "MANHA:", s.board.manhattan(), \
+                                "MOVE:", s._last_move
             s._expand_moves()
 
 
@@ -367,8 +371,7 @@ class AISolver1(_AISolverBase):
             return
 
         heuristic = s.depth + s.board.manhattan()
-        if s.total_expanded_nodes % 1000 == 0:
-            print "NODES:", s.total_expanded_nodes, "DEPTH:", s.depth, "MANHA:", s.board.manhattan(), "MOVE:", dir
+        
         heappush(s._frontier, (heuristic, s.depth, dir, new_state, s._move_list[:]))
         s.board.set_tiles(prev_state)
     
@@ -376,6 +379,7 @@ class AISolver1(_AISolverBase):
         s.board = s.board_initial
         while True:
             _clear()
+            print "A* Default!"
             s.board._print()
             print s.depth
 
@@ -413,6 +417,9 @@ class AISolver2(_AISolverBase):
                 print "Yay!"
                 s._play()
                 exit(0)             
+
+            if s.total_expanded_nodes % 1000 == 0:
+                print s.total_expanded_nodes, s._node.depth, s.board.manhattan()
 
             s._expand_moves()
 
@@ -471,8 +478,6 @@ class AISolver2(_AISolverBase):
     def _move_and_queue(s, dir):
         s._move(dir)
         manhattan = s.board.manhattan()
-        if s.total_expanded_nodes % 1000 == 0:
-            print s._node.depth + 1, "_____", dir, "_____", manhattan
         s._reverse_move(dir)
         node_ref = MoveTreeNode(s._node, s._node.depth + 1)
 
@@ -487,9 +492,13 @@ class AISolver2(_AISolverBase):
             move_stack.append(move)
             s._node = s._node.parent
 
+        moves = -1
         while True:
             _clear()
+            print "A* Tree Solver!"
             s.board._print()
+            moves += 1
+            print moves
 
             if not move_stack:
                 break
@@ -506,20 +515,37 @@ def _clear():
     else:
         system('clear')
 
-def _main():
-    print "Creating board. . ."
+def _arg_controller():
 
-    size = 3
-    if sys.argv.__len__() > 1:
-        size = int(sys.argv[1])
-        if size < 3:
-            size = 3
+    p = optparse.OptionParser(description = "Cheesy Tile Solving AI using A*", \
+                                version = "-2.6", \
+                                prog = "tile2.py", \
+                                usage = "%prog [option] [board-size]")
 
+    p.add_option('--tree', '-t', action = 'store_true', \
+                help = "Attempts to solve the board using a tree of all moves" +\
+                       " (warning: this takes a lot of space and is slow!)")
 
-    b = Board(size)
+    opts, args = p.parse_args()
+
+    print 'Creating board. . .'
+    if not args or args[0] < 3:
+        size = 3
+    else:
+        size = int(args[0])
+
+    board = Board(size)
     _clear()
-    cpu = AISolver2(b)
-    cpu.solve()
+
+    if opts.tree:
+        ai_solver = AISolver2(board)
+    else:
+        ai_solver = AISolver1(board)
+
+    ai_solver.solve()
+
+def _main():
+    _arg_controller()
 
 if __name__ == '__main__':
    _main() 
