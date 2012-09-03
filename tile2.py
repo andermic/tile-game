@@ -167,7 +167,7 @@ class Board():
             print row_str
         print bottom_str
 
-class AISolver():
+class _AISolverBase:
 
     '''
     Determines the move we took.
@@ -178,31 +178,117 @@ class AISolver():
     DOWN = 'D'
 
     def __init__(s, board):
-        '''
-        Determines the last move made.
-        '''
-        s._last_move = ''     
-        
-        '''
-        A heap containing tuples of
-        the last evaluated heuristic
-        as well as the state of the board.
-        '''
-        s._frontier = []
+            '''
+            Determines the last move made.
+            '''
+            s._last_move = ''     
+            
+            '''
+            A heap containing tuples of
+            the last evaluated heuristic
+            as well as the state of the board.
+            '''
+            s._frontier = []
 
-        '''
-        Determines the moves we've taken to get to
-        a solution.
-        '''
-        s._move_list = []
-        s.board = copy.deepcopy(board)
-        s.board_initial = copy.deepcopy(board)
-        s.depth = 0
-        s.total_expanded_nodes = 0
-        s._expand_moves()
-        print "INITIAL"
-        s.board._print()
+            '''
+            Determines the moves we've taken to get to
+            a solution.
+            '''
+            s._move_list = []
+            s.board = copy.deepcopy(board)
+            s.board_initial = copy.deepcopy(board)
+            s.depth = 0
+            s.total_expanded_nodes = 0
+            s._expand_moves()
+            print "INITIAL"
+            s.board._print()
 
+    def solve(s):
+        '''
+        Solves the board and queues up the moves.
+        '''
+        pass
+
+    def _expand_moves(s):
+        '''
+        Expands the moves from the current game tree
+        node.
+        '''
+        pass
+
+    def _move(s, dir):
+        '''
+        Moves in the specified direction.
+        '''
+        if dir == s.UP:
+            s.board.move_up()
+        elif dir == s.DOWN:
+            s.board.move_down()
+        elif dir == s.LEFT:
+            s.board.move_left()
+        elif dir == s.RIGHT: # Right
+            s.board.move_right()
+        else:
+            return False
+        return True
+
+    def _play(s):
+        '''
+        Plays through the moves that got to the solution.
+        '''
+        pass
+
+class MoveTree:
+    '''
+    A tree of game moves.
+    '''
+
+    def __init__(s, parent=None, depth=0):
+        s.left = None
+        s.right = None
+        s.up = None
+        s.down = None
+        s.parent = parent
+        s.depth = depth
+
+    def get_common_parent(s, node, move_stack=[]):
+        '''
+        Finds the common parent between this and
+        another node and returns a reference to
+        that node. If the move stack is passed, then
+        the moves taken will be returned so that going
+        from the common parent to the other node will
+        be easy
+        '''
+
+        this_depth  = s.depth
+        other_depth = node.depth
+
+        s_ref = s
+        diff = abs(this_depth - other_depth)
+
+        if this_depth > other_depth:
+            for x in range(diff):
+                s_ref = s_ref.parent
+        elif this_depth < other_depth:
+            for x in range(diff):
+                move_stack.append(node)
+                node = node.parent
+        '''
+        Here we assume the nodes are of
+        equal depth, at which point we return
+        the objects once their references are
+        equal.  Until then we climb to the root
+        of the tree.
+        '''
+        while (s_ref != node):
+            s_ref = s_ref.parent
+            move_stack.append(node)
+            node = node.parent
+
+        return node
+
+class AISolver1(_AISolverBase):
 
     def solve(s):
         while True:
@@ -297,18 +383,17 @@ class AISolver():
 
         print "Done!"
 
-    def _move(s, dir):
-        if dir == s.UP:
-            s.board.move_up()
-        elif dir == s.DOWN:
-            s.board.move_down()
-        elif dir == s.LEFT:
-            s.board.move_left()
-        elif dir == s.RIGHT: # Right
-            s.board.move_right()
-        else:
-            return False
-        return True
+class AISolver2(_AISolverBase):
+
+    def __init__(s):
+
+        # Make move tree first so call to _expand_moves
+        # functions the way it should.
+        s._move_tree = MoveTree()
+        _AISolverBase.__init__(s)
+
+    def solve(s):
+        pass
 
 def _clear():
     ''' Clears the screen '''
@@ -329,7 +414,7 @@ def _main():
 
     b = Board(size)
     _clear()
-    cpu = AISolver(b)
+    cpu = AISolver1(b)
     cpu.solve()
 
 if __name__ == '__main__':
