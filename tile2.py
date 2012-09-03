@@ -37,7 +37,9 @@ class Board():
 
         s.position = (s.size - 1, s.size - 1)
         s.board_goal = copy.deepcopy(s.board) # Victory state.
-        s.shuffle(1000 * s.size ** 2)
+        #s.shuffle(1000 * s.size ** 2)
+        s.move_left()
+        s.move_up()
 
     def set_tiles(s, tiles):
         s.board = tiles
@@ -194,12 +196,6 @@ class _AISolverBase:
             s.board_initial._print()
             s._expand_moves()
 
-    def solve(s):
-        '''
-        Solves the board and queues up the moves.
-        '''
-        pass
-
     def _expand_moves(s):
         '''
         Expands the moves from the current game tree
@@ -238,12 +234,6 @@ class _AISolverBase:
         else:
             return False
         return True
-
-    def _play(s):
-        '''
-        Plays through the moves that got to the solution.
-        '''
-        pass
 
 class MoveTreeNode:
     '''
@@ -391,7 +381,7 @@ class AISolver1(_AISolverBase):
             s.board._print()
             print s.depth
 
-            if s._move_list.__len__() < 1:
+            if not s._move_list:
                 break
             
             move = s._move_list.pop(0)
@@ -423,34 +413,26 @@ class AISolver2(_AISolverBase):
 
             if tuple_[0] - tuple_[1].depth == 0:
                 print "Yay!"
+                s._play()
                 exit(0)             
 
             s._expand_moves()
-
 
     def _move_position(s, next_node):
         # This will get us to the new node.
         move_stack = []
 
-        parent = s._node.get_common_parent(next_node)
-
-        print "PARENT DEPTH:", parent.depth
-        print "NODE DEPTH:", s._node.depth
-        print "LAST DEPTH", next_node.depth
+        parent = s._node.get_common_parent(next_node, move_stack)
 
         while s._node != parent:
             move = s._get_dir_to_node(s._node)
             s._reverse_move(move)
             s._node = s._node.parent
 
-        for node_ref in move_stack:
+        while move_stack:
+            node_ref = move_stack.pop()
             move = s._get_dir_to_node(node_ref)
             s._move(move)
-
-        move = s._get_dir_to_node(next_node)
-        s._move(move)
-        
-        s.board._print()
 
     def _get_dir_to_node(s, node):
         '''
@@ -491,12 +473,33 @@ class AISolver2(_AISolverBase):
     def _move_and_queue(s, dir):
         s._move(dir)
         manhattan = s.board.manhattan()
-        print s._node.depth + 1, "_____", dir, "_____", manhattan
+        if s.total_expanded_nodes % 1000 == 0:
+            print s._node.depth + 1, "_____", dir, "_____", manhattan
         s._reverse_move(dir)
         node_ref = MoveTreeNode(s._node, s._node.depth + 1)
 
         heappush(s._frontier, (node_ref.depth + manhattan, node_ref))
         return node_ref
+
+    def _play(s):
+        move_stack = []
+        s.board = copy.deepcopy(s.board_initial)
+        while s._node != s._move_tree:
+            move = s._get_dir_to_node(s._node)
+            move_stack.append(move)
+            s._node = s._node.parent
+
+        while True:
+            _clear()
+            s.board._print()
+
+            if not move_stack:
+                break
+
+            s._move(move_stack.pop())
+            raw_input("Press [Enter] To Continue")
+
+        print "Done!"
 
 def _clear():
     ''' Clears the screen '''
