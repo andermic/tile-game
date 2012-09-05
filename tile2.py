@@ -169,9 +169,16 @@ class Board():
         print bottom_str
 
 class _AISolverBase:
+    '''
+    A class that sets up an A* based tile game
+    solver.  Initiates the heap and the board,
+    as well as moves based on the static direction
+    attributes (Right, Left, Up, and Down).
+    '''
 
     '''
-    Determines the move we took.
+    Determines the move we took.  This is simply
+    a cheesy attempt at an enum.
     '''
     RIGHT = 'R'
     LEFT = 'L'
@@ -286,7 +293,15 @@ class MoveTreeNode:
 
         return node
 
-class AISolver1(_AISolverBase):
+class AISolverAStar(_AISolverBase):
+    '''
+    Uses a simple implementation of A*
+    to solve a square shaped tile board.
+    The frontier, when not empty, contains
+    a copy of the board's state, as well as all
+    moves taken to get the board to the state
+    it is currently in.
+    '''
 
     def __init__(s, board):
         '''
@@ -397,7 +412,15 @@ class AISolver1(_AISolverBase):
 
         print "Done!"
 
-class AISolver2(_AISolverBase):
+class AISolverAStarTree(_AISolverBase):
+    '''
+    A silly but fun implementation of A* which
+    doesn't keep track of the board state, but instead
+    keeps a global tree that maintains all of the moves
+    (Left, Right, Up, and Down) that have been taken,
+    only storing the node we're currently looking at in
+    the move tree.
+    '''
 
     def __init__(s, board):
         # Make move tree first so call to _expand_moves
@@ -538,9 +561,9 @@ def _arg_controller():
     _clear()
 
     if opts.tree:
-        ai_solver = AISolver2(board)
+        ai_solver = AISolverAStarTree(board)
     else:
-        ai_solver = AISolver1(board)
+        ai_solver = AISolverAStar(board)
 
     ai_solver.solve()
 
