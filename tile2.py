@@ -41,9 +41,6 @@ class Board():
                 for x in range(s.size)]\
                 for y in range(s.size)]
 
-        print(s.board)
-        sys.exit(0)
-
         s.position = (s.size - 1, s.size - 1)
         s.board_goal = copy.deepcopy(s.board) # Victory state.
         if not manual:
