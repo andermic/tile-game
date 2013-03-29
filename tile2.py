@@ -13,6 +13,8 @@ import os
 import signal
 import copy
 import optparse
+import readline
+import threading
 from heapq import *
 from os import system
 from random import choice
@@ -531,6 +533,15 @@ class AISolverAStarTree(_AISolverBase):
 
         print "Done!"
 
+def _parse_board():
+    '''
+    Creates a board manually from user input.  For now it doesn't check to see
+    if the board can be solved.
+
+    TODO: Check to see if the board can be solved, and make sure to validate
+    the input.
+    '''
+
 def _clear():
     ''' Clears the screen '''
     if (os.name == 'nt'):
@@ -548,6 +559,10 @@ def _arg_controller():
     p.add_option('--tree', '-t', action = 'store_true', \
                 help = "Attempts to solve the board using a tree of all moves" +\
                        " (warning: this takes a lot of space and is slow!)")
+    p.add_option('--manual', '-m', action = "store_true", \
+                help = "Asks the user to manually create a tree.  Enter a" +\
+                       "number for each tile when prompted, separated by" +\
+                       "spaces.  Ignores size param if given.")
 
     opts, args = p.parse_args()
 
@@ -556,6 +571,10 @@ def _arg_controller():
         size = 3
     else:
         size = int(args[0])
+
+    if opts.manual:
+        print("huzzah!")
+        sys.exit(0)
 
     board = Board(size)
     _clear()
