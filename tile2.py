@@ -31,7 +31,7 @@ class Board():
     function properly.
     '''
 
-    def __init__(s, size):
+    def __init__(s, size=None):
         s.size = size
 
         s.board = [[(1 + x + y * s.size) % s.size**2 \
@@ -104,6 +104,16 @@ class Board():
         if not s.on_right_edge():
             s._switch_tiles(s.position[0], s.position[1], \
                             s.position[0], s.position[1] + 1)
+
+    def _parse_board():
+        '''
+        Creates a board manually from user input.  For now it doesn't check to see
+        if the board can be solved.
+
+        TODO: Check to see if the board can be solved, and make sure to validate
+        the input.
+        '''
+        return None
 
     def _switch_tiles(s, r, c, r_prime, c_prime):
         temp = s.board[r][c]
@@ -188,7 +198,6 @@ class _AISolverBase:
     DOWN = 'D'
 
     def __init__(s, board):
-                        
             '''
             A heap containing tuples of
             the last evaluated heuristic
@@ -196,7 +205,6 @@ class _AISolverBase:
             '''
             s._frontier = []
 
-            
             s.board = copy.deepcopy(board)
             s.board_initial = copy.deepcopy(board)
             s.total_expanded_nodes = 0
@@ -533,15 +541,6 @@ class AISolverAStarTree(_AISolverBase):
 
         print "Done!"
 
-def _parse_board():
-    '''
-    Creates a board manually from user input.  For now it doesn't check to see
-    if the board can be solved.
-
-    TODO: Check to see if the board can be solved, and make sure to validate
-    the input.
-    '''
-
 def _clear():
     ''' Clears the screen '''
     if (os.name == 'nt'):
@@ -572,11 +571,11 @@ def _arg_controller():
     else:
         size = int(args[0])
 
+    board = None
     if opts.manual:
-        print("huzzah!")
-        sys.exit(0)
-
-    board = Board(size)
+        board = Board()
+    else:
+        board = Board(size)
     _clear()
 
     if opts.tree:
