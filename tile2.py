@@ -5,6 +5,10 @@
 #
 # CAUTION:  The spacing in here is just that: spacing.
 # don't use tabs if editing this, please.
+#
+# TODO: The solution assumes that the bottom right corner is going to be the
+# location of the solution.  This might need to be changed such that the
+# location of the solution is arbitrarily defined.
 
 import time
 import math
@@ -31,16 +35,21 @@ class Board():
     function properly.
     '''
 
-    def __init__(s, size=None):
+    def __init__(s, size, manual=False):
         s.size = size
-
         s.board = [[(1 + x + y * s.size) % s.size**2 \
                 for x in range(s.size)]\
                 for y in range(s.size)]
 
+        print(s.board)
+        sys.exit(0)
+
         s.position = (s.size - 1, s.size - 1)
         s.board_goal = copy.deepcopy(s.board) # Victory state.
-        s.shuffle(1000 * s.size ** 2)
+        if not manual:
+            s.shuffle(1000 * s.size ** 2)
+        else:
+            s._parse_board()
 
     def set_tiles(s, tiles):
         s.board = tiles
@@ -105,7 +114,7 @@ class Board():
             s._switch_tiles(s.position[0], s.position[1], \
                             s.position[0], s.position[1] + 1)
 
-    def _parse_board():
+    def _parse_board(s):
         '''
         Creates a board manually from user input.  For now it doesn't check to see
         if the board can be solved.
@@ -113,7 +122,12 @@ class Board():
         TODO: Check to see if the board can be solved, and make sure to validate
         the input.
         '''
-        return None
+        string = str(raw_input('> '))
+        nums = [int(x) for x in string.split(' ')]
+        print(nums)
+        for row in range(s.size):
+            for col in range(s.size):
+                s.board[row][col] = nums[row * s.size + col]
 
     def _switch_tiles(s, r, c, r_prime, c_prime):
         temp = s.board[r][c]
@@ -573,7 +587,7 @@ def _arg_controller():
 
     board = None
     if opts.manual:
-        board = Board()
+        board = Board(size, True)
     else:
         board = Board(size)
     _clear()
